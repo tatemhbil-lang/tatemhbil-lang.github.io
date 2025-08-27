@@ -7,7 +7,7 @@
     <script src="metro-sound-manager.js"></script>
     <script src="pilotauto.js"></script>
     <style>
-        body {
+                       body {
             margin: 0;
             padding: 20px; /* Marge par dÃ©faut comme dans l'original */
             font-family: Arial, sans-serif;
@@ -289,7 +289,6 @@
             opacity: 0.5;
             pointer-events: none;
         }
-
         /* Styles pour mobile - Orientation paysage et portrait */
         @media screen and (max-width: 900px) {
             body {
@@ -297,7 +296,6 @@
                 height: 100vh;
                 box-sizing: border-box;
             }
-            
             /* Calculer le scale factor pour rÃ©duire proportionnellement */
             #gameContainer {
                 width: min(90vw, 700px);
@@ -305,13 +303,13 @@
                 margin: 0 0 8px 0;
                 transform-origin: top left;
             }
-            
-            /* Redimensionner le train et les portes proportionnellement */
+            /* Redimensionner le train et les portes proportionnellement aux portes paliÃ¨res */
             #train, #porteDr, #porteGc {
-                width: calc((min(90vw, 700px) / 843) * 620px);
-                bottom: calc((min(90vw, 700px) / 843) * 20px);
+                 /* BasÃ© sur la hauteur du conteneur, comme auparavant, mais ajustÃ© */
+                 width: calc((100% * (620 / 843)) - 10px);
+                 bottom: calc(100% * (20 / 276));
+                 left: 0;
             }
-            
             /* Conteneur pour les contrÃ´les et l'Ã©cran d'info sur mobile */
             #mobileControlsContainer {
                 display: flex;
@@ -320,7 +318,6 @@
                 margin: 0 0 8px 0;
                 flex-wrap: wrap;
             }
-            
             #controls {
                 margin: 0;
                 padding: 5px 8px;
@@ -328,7 +325,6 @@
                 flex-shrink: 0;
                 max-width: calc(min(90vw, 700px) * 0.6);
             }
-            
             #infoScreen {
                 margin: 0;
                 width: auto;
@@ -339,36 +335,29 @@
                 padding: 6px;
                 font-size: 10px;
             }
-            
             #speedSlider {
                 height: 100px;
                 width: 12px;
             }
-            
             #speedHandle {
                 width: 28px;
                 height: 18px;
             }
-            
             #speedDisplay {
                 font-size: 12px;
                 min-width: 50px;
             }
-            
             .emergency-auto-group {
                 gap: 3px;
             }
-            
             #autoButton, #emergencyButton {
                 padding: 5px 8px;
                 font-size: 8px;
             }
-            
             .door-button {
                 width: 18px;
                 height: 18px;
             }
-            
             #nextStationInfo {
                 top: 6px;
                 right: 6px;
@@ -376,55 +365,53 @@
                 font-size: 10px;
             }
         }
-
         /* Pour les Ã©crans trÃ¨s petits (portrait) */
         @media screen and (max-width: 600px) {
             #gameContainer {
                 width: 95vw;
                 height: calc(95vw * 276 / 843);
             }
-            
-            /* Redimensionner le train et les portes pour très petits écrans */
+            /* Redimensionner le train et les portes proportionnellement aux portes paliÃ¨res */
             #train, #porteDr, #porteGc {
-                width: calc((95vw / 843) * 620px);
-                bottom: calc((95vw / 843) * 20px);
+                 /* BasÃ© sur la hauteur du conteneur, comme auparavant, mais ajustÃ© */
+                 width: calc((100% * (620 / 843)) - 10px);
+                 bottom: calc(100% * (20 / 276));
+                 left: 0;
             }
-            
             #mobileControlsContainer {
                 flex-direction: column;
                 width: 95vw;
             }
-            
             #controls {
                 max-width: none;
                 width: 100%;
                 justify-content: center;
                 flex-wrap: wrap;
             }
-            
             #infoScreen {
                 max-width: none;
                 width: calc(95vw - 16px);
                 height: 60px;
             }
-            
             #speedSlider {
                 height: 80px;
             }
-            
             #speedHandle {
                 width: 26px;
                 height: 16px;
             }
         }
-
         /* RÃ¨gles pour les Ã©crans trÃ¨s larges (desktop) - aucun changement */
         @media screen and (min-width: 901px) {
             #gameContainer {
                 width: 843px;
                 height: 276px;
             }
-            
+            #train, #porteDr, #porteGc {
+                 width: 620px;
+                 bottom: 20px;
+                 left: 0;
+            }
             #mobileControlsContainer {
                 display: block;
             }
@@ -445,8 +432,7 @@
             <div id="distanceDisplay">--- m</div>
         </div>
     </div>
-    
-    <!-- Conteneur spÃ©cifique pour mobile -->
+    <!-- Conteneur spécifique pour mobile -->
     <div id="mobileControlsContainer">
         <div id="controls">
             <div class="control-group">
@@ -480,13 +466,12 @@
             </div>
         </div>
         <div id="infoScreen">
-            <div id="infoScreenHeader">SYSTÃˆME DE CONTRÃ"LE</div>
+            <div id="infoScreenHeader">SYSTÈME DE CONTRÔLE</div>
             <div class="info-line" id="systemStatus">Initialisation...</div>
             <div class="info-line" id="imageLoadStatus"></div>
             <div class="info-line" id="readyStatus"></div>
         </div>
     </div>
-
     <script>
         class MetroSimulator {
             constructor() {
@@ -529,9 +514,9 @@
                 };
                 this.sounds.ventilo.loop = true;
                 this.isVentiloPlaying = false;
-                // Canvas prÃ©chargÃ©s pour Ã©liminer la latence
+                // Canvas préchargés pour éliminer la latence
                 this.preloadedCanvases = {};
-                this.rawImages = {}; // Images brutes pour les mÃ©tadonnÃ©es
+                this.rawImages = {}; // Images brutes pour les métadonnées
                 this.tunnelSequence = [
                     'inje4c', 
                     '4c', 
@@ -596,7 +581,7 @@
                 this.initControls();
                 this.setupKeyboardControls();
             }
-            // MÃ©thode pour obtenir la distance au prochain quai
+            // Méthode pour obtenir la distance au prochain quai
             getNextStationDistance() {
                 if (this.stationPositions.length === 0) return null;
                 const currentOffset = this.scrollOffset % this.totalSequenceWidth;
@@ -614,7 +599,7 @@
                 }
                 return nextStation;
             }
-            // MÃ©thode publique pour ouvrir les portes (utilisÃ©e par l'autopilote)
+            // Méthode publique pour ouvrir les portes (utilisée par l'autopilote)
             openDoors() {
                 if (this.speed === 0 && !this.areDoorsOpen && !this.platformDoorsAnimating) {
                     this.sounds.ouv_prt.currentTime = 0;
@@ -622,11 +607,11 @@
                     this.porteDr.style.transform = 'translateX(34px)';
                     this.porteGc.style.transform = 'translateX(-34px)';
                     this.areDoorsOpen = true;
-                    // Ouvrir Ã©galement les portes paliÃ¨res avec animation
+                    // Ouvrir également les portes paliers avec animation
                     this.animatePlatformDoors(true);
                 }
             }
-            // MÃ©thode publique pour fermer les portes (utilisÃ©e par l'autopilote)
+            // Méthode publique pour fermer les portes (utilisée par l'autopilote)
             closeDoors() {
                 if (this.areDoorsOpen && !this.platformDoorsAnimating) {
                     this.sounds.buzzer.currentTime = 0;
@@ -637,12 +622,12 @@
                         this.porteDr.style.transform = 'translateX(0)';
                         this.porteGc.style.transform = 'translateX(0)';
                         this.areDoorsOpen = false;
-                        // Fermer Ã©galement les portes paliÃ¨res avec animation
+                        // Fermer également les portes paliers avec animation
                         this.animatePlatformDoors(false);
                     };
                 }
             }
-            // Nouvelle mÃ©thode pour animer les portes paliÃ¨res via CSS
+            // Nouvelle méthode pour animer les portes paliers via CSS
             animatePlatformDoors(opening) {
                 if (this.platformDoorsAnimating) return;
                 this.platformDoorsAnimating = true;
@@ -655,15 +640,15 @@
                     this.ppdCanvas.style.transform = 'translateX(0)';
                     this.arePlatformDoorsOpen = false;
                 }
-                // Marquer la fin de l'animation aprÃ¨s la durÃ©e CSS
+                // Marquer la fin de l'animation après la durée CSS
                 setTimeout(() => {
                     this.platformDoorsAnimating = false;
                 }, 1800);
             }
-            // MÃ©thode publique pour contrÃ´ler l'accÃ©lÃ©ration (utilisÃ©e par l'autopilote)
+            // Méthode publique pour contrôler l'accélération (utilisée par l'autopilote)
             setAcceleration(value) {
                 this.acceleration = Math.max(-5, Math.min(5, value));
-                // Mettre Ã  jour la position du levier
+                // Mettre à jour la position du levier
                 const percentage = ((5 - this.acceleration) / 10) * 100;
                 this.setHandlePosition(percentage);
             }
@@ -671,7 +656,7 @@
                 if (this.systemStatus) {
                     this.systemStatus.textContent = `> ${message}`;
                     this.systemStatus.className = 'info-line';
-                    if (message.includes('prÃªt') || message.includes('attente')) {
+                    if (message.includes('prêt') || message.includes('attente')) {
                         this.systemStatus.classList.add('status-ready');
                     } else if (message.includes('erreur') || message.includes('Erreur')) {
                         this.systemStatus.classList.add('status-error');
@@ -693,7 +678,7 @@
                 }
             }
             preloadAllImages() {
-                this.updateImageLoadStatus('PrÃ©paration des ressources...');
+                this.updateImageLoadStatus('Préparation des ressources...');
                 const stationImages = ['inje4c', '4c', 'railext', 'ctsci', 'pont', 'avt_triolo', 'triolo', 'sortie_triolo', 'rail_tranchee', 'pont_autoroute1', 'pont_autoroute2', 'entree_tunnel', 'hoteldeville', 'pontdebois'];
                 const srcImages = ['tunnel_classic'];
                 const quaiImages = ['quai', 'ppg', 'ppd'];
@@ -703,7 +688,7 @@
                 allImageNames.forEach(name => {
                     const img = new Image();
                     img.onload = () => {
-                        // Stocker l'image brute pour les mÃ©tadonnÃ©es
+                        // Stocker l'image brute pour les métadonnées
                         this.rawImages[name] = img;
                         this.imageMetadata[name] = {
                             width: img.width,
@@ -713,14 +698,14 @@
                         if (name === 'quai') {
                             this.quaiWidth = img.width;
                         }
-                        // CrÃ©er un canvas prÃ©chargÃ© avec l'image mise Ã  l'Ã©chelle
+                        // Créer un canvas préchargé avec l'image mise à l'échelle
                         this.createPreloadedCanvas(name, img);
                         loadedCount++;
                         this.updateImageLoadStatus(`Images: ${loadedCount}/${totalImages}`);
                         if (loadedCount === totalImages) {
                             this.imagesLoaded = true;
                             this.calculateSequenceDimensions();
-                            this.updateReadyStatus('SYSTÃˆME PRÃŠT');
+                            this.updateReadyStatus('SYSTÈME PRÊT');
                             this.updateSystemStatus('En attente...');
                             this.gameLoop();
                         }
@@ -747,7 +732,7 @@
                     canvas.width = scaledWidth;
                     canvas.height = targetHeight;
                     const ctx = canvas.getContext('2d');
-                    // DÃ©sactiver le lissage pour des images plus nettes
+                    // Désactiver le lissage pour des images plus nettes
                     ctx.imageSmoothingEnabled = false;
                     ctx.drawImage(img, 0, 0, scaledWidth, targetHeight);
                     this.preloadedCanvases[name] = canvas;
@@ -783,13 +768,12 @@
                     }
                 }
                 this.totalSequenceWidth = currentPosition;
-                this.updateSystemStatus('Calculs terminÃ©s');
+                this.updateSystemStatus('Calculs terminés');
             }
             initControls() {
                 let isDragging = false;
                 let startY = 0;
                 let startTop = 0;
-                
                 // --- GESTION SOURIS ---
                 this.speedHandle.addEventListener('mousedown', (e) => {
                     if (this.isFuActive || this.isAutoPilotActive) return;
@@ -800,7 +784,6 @@
                     e.preventDefault();
                     this.speedHandle.style.cursor = 'grabbing';
                 });
-
                 document.addEventListener('mousemove', (e) => {
                     if (isDragging && !this.isFuActive && !this.isAutoPilotActive) {
                         const deltaY = e.clientY - startY;
@@ -812,7 +795,6 @@
                         this.updateAcceleration(newTop);
                     }
                 });
-
                 document.addEventListener('mouseup', () => {
                     if (isDragging && !this.isFuActive && !this.isAutoPilotActive) {
                         isDragging = false;
@@ -823,7 +805,6 @@
                         this.speedHandle.style.cursor = 'grab';
                     }
                 });
-
                 // --- GESTION TACTILE (MOBILE) ---
                 this.speedHandle.addEventListener('touchstart', (e) => {
                     if (this.isFuActive || this.isAutoPilotActive) return;
@@ -832,10 +813,9 @@
                     startY = e.touches[0].clientY;
                     const currentTop = this.getHandlePosition();
                     startTop = currentTop;
-                    e.preventDefault(); // EmpÃªche le scrolling de la page
+                    e.preventDefault(); // Empêche le scrolling de la page
                     this.speedHandle.style.cursor = 'grabbing';
-                }, { passive: false }); // passive: false est nÃ©cessaire pour pouvoir faire preventDefault
-
+                }, { passive: false }); // passive: false est nécessaire pour pouvoir faire preventDefault
                 document.addEventListener('touchmove', (e) => {
                     if (isDragging && !this.isFuActive && !this.isAutoPilotActive) {
                         // Utiliser le premier doigt
@@ -846,10 +826,9 @@
                         newTop = this.applyMagnetEffect(newTop);
                         this.setHandlePosition(newTop);
                         this.updateAcceleration(newTop);
-                        e.preventDefault(); // EmpÃªche le scrolling de la page
+                        e.preventDefault(); // Empêche le scrolling de la page
                     }
-                }, { passive: false }); // passive: false est nÃ©cessaire pour pouvoir faire preventDefault
-
+                }, { passive: false }); // passive: false est nécessaire pour pouvoir faire preventDefault
                 document.addEventListener('touchend', () => {
                     if (isDragging && !this.isFuActive && !this.isAutoPilotActive) {
                         isDragging = false;
@@ -860,7 +839,6 @@
                         this.speedHandle.style.cursor = 'grab';
                     }
                 });
-
                 // --- CLIC SUR LE SLIDER (SOURIS & TOUCH) ---
                 this.speedSlider.addEventListener('click', (e) => {
                     if (this.isFuActive || this.isAutoPilotActive) return;
@@ -872,7 +850,6 @@
                     this.setHandlePosition(snappedPos);
                     this.updateAcceleration(snappedPos);
                 });
-
                 // --- BOUTONS ---
                 this.openDoorButton.addEventListener('click', () => {
                     if (this.isAutoPilotActive || this.platformDoorsAnimating) return;
@@ -891,15 +868,15 @@
                 });
             }
             toggleAutoPilot() {
-                // Inverse l'Ã©tat du pilote automatique
+                // Inverse l'état du pilote automatique
                 this.isAutoPilotActive = !this.isAutoPilotActive;
                 if (this.isAutoPilotActive) {
                     // --- Activation du PA ---
                     this.autoButton.classList.add('active');
-                    this.updateSystemStatus('PILOTE AUTO ACTIVÃ‰');
+                    this.updateSystemStatus('PILOTE AUTO ACTIVÉ');
                     this.disableManualControls();
                     if (this.speed > 0) {
-                        // Si le train roule, on l'arrÃªte d'abord
+                        // Si le train roule, on l'arrête d'abord
                         this.emergencyStop();
                         const waitForStop = () => {
                             if (this.speed === 0 && !this.isFuActive) {
@@ -910,19 +887,19 @@
                         };
                         setTimeout(waitForStop, 100);
                     } else {
-                        // Si le train est Ã  l'arrÃªt, on active directement
+                        // Si le train est à l'arrêt, on active directement
                         this.autoPilot.activate();
                     }
                 } else {
-                    // --- DÃ©sactivation du PA ---
+                    // --- Désactivation du PA ---
                     this.autoPilot.deactivate();
                     this.autoButton.classList.remove('active');
-                    this.updateSystemStatus('PILOTE AUTO DÃ‰SACTIVÃ‰');
+                    this.updateSystemStatus('PILOTE AUTO DÉSACTIVÉ');
                     this.enableManualControls();
                 }
             }
             disableManualControls() {
-                // DÃ©sactive les contrÃ´les un par un sans bloquer le bouton PA
+                // Désactive les contrôles un par un sans bloquer le bouton PA
                 this.speedHandle.classList.add('handle-disabled');
                 // Rend le fond du slider non cliquable
                 this.speedSlider.style.pointerEvents = 'none';
@@ -931,7 +908,7 @@
                 this.emergencyButton.disabled = true;
             }
             enableManualControls() {
-                // RÃ©active les contrÃ´les manuels
+                // Réactive les contrôles manuels
                 this.speedHandle.classList.remove('handle-disabled');
                 this.speedSlider.style.pointerEvents = 'auto';
                 this.openDoorButton.disabled = false;
@@ -1054,12 +1031,12 @@
                 if (!this.imagesLoaded) return;
                 const targetHeight = 276;
                 const canvasWidth = 843;
-                const scrollSpeed = (this.speed / 80) * 15 * 1.1; // Vitesse augmentÃ©e
+                const scrollSpeed = (this.speed / 80) * 15 * 1.1; // Vitesse augmentée
                 this.scrollOffset += scrollSpeed;
                 const offsetInCycle = this.scrollOffset % this.totalSequenceWidth;
                 // Nettoyer le canvas principal
                 this.ctx.clearRect(0, 0, canvasWidth, targetHeight);
-                // Dessiner les tunnels avec anti-gap (chevauchement lÃ©ger)
+                // Dessiner les tunnels avec anti-gap (chevauchement léger)
                 for (let cycle = -1; cycle <= 2; cycle++) {
                     let currentX = (cycle * this.totalSequenceWidth) - offsetInCycle;
                     for (let i = 0; i < this.tunnelSequence.length; i++) {
@@ -1067,7 +1044,7 @@
                         const preloadedCanvas = this.preloadedCanvases[tunnelType];
                         const scaledWidth = this.scaledWidths[i];
                         if (preloadedCanvas && scaledWidth && currentX + scaledWidth > -1 && currentX < canvasWidth + 1) {
-                            // LÃ©gÃ¨re extension pour Ã©viter les gaps
+                            // Légère extension pour éviter les gaps
                             this.ctx.drawImage(preloadedCanvas, 0, 0, preloadedCanvas.width, preloadedCanvas.height,
                                              Math.floor(currentX - 0.5), 0, Math.ceil(scaledWidth + 1), targetHeight);
                         }
@@ -1076,7 +1053,7 @@
                 }
                 // Nettoyer les canvas des quais
                 this.quaiCtx.clearRect(0, 0, canvasWidth, targetHeight);
-                // Dessiner les quais (les portes paliÃ¨res sont maintenant gÃ©rÃ©es par CSS)
+                // Dessiner les quais (les portes paliers sont maintenant gérées par CSS)
                 for (let cycle = -1; cycle <= 2; cycle++) {
                     let currentX = (cycle * this.totalSequenceWidth) - offsetInCycle;
                     for (let i = 0; i < this.quaiSequence.length; i++) {
@@ -1100,7 +1077,7 @@
                         currentX += scaledWidth;
                     }
                 }
-                // Dessiner les portes paliÃ¨res sur leurs canvas dÃ©diÃ©s (une seule fois par quai)
+                // Dessiner les portes paliers sur leurs canvas dédiés (une seule fois par quai)
                 this.drawPlatformDoors(offsetInCycle, canvasWidth, targetHeight);
             }
             drawPlatformDoors(offsetInCycle, canvasWidth, targetHeight) {
@@ -1139,7 +1116,7 @@
                 this.ctx.clearRect(0, 0, 843, 276);
                 this.updateSpeed();
                 this.drawTunnels();
-                // Mettre Ã  jour l'autopilote
+                // Mettre à jour l'autopilote
                 if (this.isAutoPilotActive) {
                     this.autoPilot.update();
                 }
