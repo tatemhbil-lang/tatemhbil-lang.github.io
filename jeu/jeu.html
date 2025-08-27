@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ValADAM</title>
+    <script src="metro-sound-manager.js"></script>
+    <script src="pilotauto.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: white;
+        }
+        #gameContainer {
+            position: relative;
+            width: 843px;
+            height: 276px;
+            overflow: hidden;
+            border: 2px solid #666;
+            background-color: #111;
+            margin-top: 30px;
+        }
+        #tunnelCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        #quaiCanvas {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 17;
+        }
+        #ppgCanvas, #ppdCanvas {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 1.8s linear;
+        }
+        #ppgCanvas {
+            z-index: 16;
+        }
+        #ppdCanvas {
+            z-index: 15;
+        }
+        #train {
+            position: absolute;
+            bottom: 20px;
+            left: 0px;
+            width: 620px;
+            height: auto;
+            z-index: 10;
+        }
+        #porteDr, #porteGc {
+            position: absolute;
+            bottom: 20px;
+            left: 0px;
+            width: 620px;
+            height: auto;
+            z-index: 11;
+            transition: transform 1.8s linear;
+        }
+        #controls {
+            position: absolute;
+            bottom: 7px;
+            left: 7px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 7px 11px;
+            border-radius: 7px;
+            z-index: 100;
+        }
+        #infoScreen {
+            position: absolute;
+            bottom: 7px;
+            left: 220px;
+            width: 250px;
+            height: 90px;
+            background: #1a1a2e;
+            border: 1px solid #4cc9f0;
+            border-radius: 7px;
+            padding: 8px;
+            font-size: 12px;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+            overflow: hidden;
+            box-shadow: 0 0 10px rgba(76, 201, 240, 0.3);
+        }
+        #nextStationInfo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid #333;
+            font-size: 12px;
+            color: #ffff00;
+            font-family: 'Courier New', monospace;
+            z-index: 100;
+        }
+        .speed-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 7px;
+        }
+        #speedSlider {
+            width: 14px;
+            height: 131px;
+            background: linear-gradient(to bottom, #444 0%, #222 100%);
+            border-radius: 7px;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.6);
+            border: 1px solid #333;
+            overflow: visible;
+        }
+        .speed-graduation {
+            position: absolute;
+            left: -2px;
+            right: -2px;
+            height: 1px;
+            background: transparent;
+        }
+        .speed-graduation.major {
+            background: #888;
+            height: 3px;
+        }
+        .speed-graduation:nth-child(1) { top: 0%; }
+        .speed-graduation:nth-child(2) { top: 10%; }
+        .speed-graduation:nth-child(3) { top: 20%; }
+        .speed-graduation:nth-child(4) { top: 30%; }
+        .speed-graduation:nth-child(5) { top: 40%; }
+        .speed-graduation:nth-child(6) { top: 50%; }
+        .speed-graduation:nth-child(7) { top: 60%; }
+        .speed-graduation:nth-child(8) { top: 70%; }
+        .speed-graduation:nth-child(9) { top: 80%; }
+        .speed-graduation:nth-child(10) { top: 90%; }
+        .speed-graduation:nth-child(11) { top: 100%; }
+        #speedHandle {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 34px;
+            height: 21px;
+            background: 
+                radial-gradient(ellipse at 30% 30%, #ffffff, transparent 50%),
+                linear-gradient(145deg, #e8e8e8, #a8a8a8);
+            border-radius: 18px;
+            box-shadow: 
+                0 4px 10px rgba(0,0,0,0.5),
+                inset 0 2px 4px rgba(255,255,255,0.6);
+            cursor: grab;
+            border: 2px solid #666;
+            user-select: none;
+            z-index: 20;
+        }
+        #speedHandle:hover {
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+        #speedHandle:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        #speedDisplay {
+            font-size: 14px;
+            font-weight: bold;
+            min-width: 55px;
+            text-align: center;
+        }
+        .door-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 7px;
+        }
+        .door-button {
+            width: 21px;
+            height: 21px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            transition: transform 0.2s ease;
+        }
+        .door-button:hover {
+            transform: translateY(-1px);
+        }
+        .door-button:active {
+            transform: translateY(1px);
+        }
+        .door-button.open {
+            background-color: #00cc00;
+        }
+        .door-button.close {
+            background-color: #cc0000;
+        }
+        .emergency-auto-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        #autoButton {
+            background: #0066cc;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 5px;
+            font-size: 9px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        #autoButton:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.4);
+        }
+        #autoButton:active {
+            transform: translateY(1px);
+        }
+        #autoButton.active {
+            background: #00cc00;
+        }
+        #emergencyButton {
+            background: #ff0000;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 5px;
+            font-size: 9px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        #emergencyButton:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 5px rgba(0,0,0,0.4);
+        }
+        #emergencyButton:active {
+            transform: translateY(1px);
+        }
+        .control-group {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #infoScreenHeader {
+            color: #4cc9f0;
+            border-bottom: 1px solid #4cc9f0;
+            padding-bottom: 3px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .info-line {
+            margin: 2px 0;
+        }
+        .status-ready {
+            color: #00ff00;
+        }
+        .status-warning {
+            color: #ffff00;
+        }
+        .status-error {
+            color: #ff0000;
+        }
+        .status-info {
+            color: #4cc9f0;
+        }
+        .handle-disabled {
+            background: 
+                radial-gradient(ellipse at 30% 30%, #888888, transparent 50%),
+                linear-gradient(145deg, #aaaaaa, #666666) !important;
+            cursor: not-allowed !important;
+        }
+        .controls-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="tunnelCanvas" width="843" height="276"></canvas>
+        <canvas id="quaiCanvas" width="843" height="276"></canvas>
+        <canvas id="ppdCanvas" width="843" height="276"></canvas>
+        <canvas id="ppgCanvas" width="843" height="276"></canvas>
+        <img id="porteGc" src="../src/pte_gc.png" alt="Porte gauche">
+        <img id="porteDr" src="../src/pte_dr.png" alt="Porte droite">
+        <img id="train" src="../src/TRAIN.png" alt="Train">
+        <div id="nextStationInfo">
+            <div>Prochain quai:</div>
+            <div id="distanceDisplay">--- m</div>
+        </div>
+    </div>
+    <div id="controls">
+        <div class="control-group">
+            <div class="slider-container">
+                <div id="speedSlider">
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation major"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div class="speed-graduation"></div>
+                    <div id="speedHandle"></div>
+                </div>
+            </div>
+        </div>
+        <div class="control-group">
+            <div id="speedDisplay">0 km/h</div>
+        </div>
+        <div class="control-group door-buttons">
+            <button class="door-button open" id="openDoorButton" title="Ouvrir les portes"></button>
+            <button class="door-button close" id="closeDoorButton" title="Fermer les portes"></button>
+        </div>
+        <div class="control-group emergency-auto-group">
+            <button id="autoButton">AUTO</button>
+            <button id="emergencyButton">FU</button>
+        </div>
+    </div>
+    <div id="infoScreen">
+        <div id="infoScreenHeader">SYSTÈME DE CONTRÔLE</div>
+        <div class="info-line" id="systemStatus">Initialisation...</div>
+        <div class="info-line" id="imageLoadStatus"></div>
+        <div class="info-line" id="readyStatus"></div>
+    </div>
+    <script>
+        class MetroSimulator {
+            constructor() {
+                this.soundManager = new MetroSoundManager();
+                this.canvas = document.getElementById('tunnelCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.quaiCanvas = document.getElementById('quaiCanvas');
+                this.quaiCtx = this.quaiCanvas.getContext('2d');
+                this.ppgCanvas = document.getElementById('ppgCanvas');
+                this.ppgCtx = this.ppgCanvas.getContext('2d');
+                this.ppdCanvas = document.getElementById('ppdCanvas');
+                this.ppdCtx = this.ppdCanvas.getContext('2d');
+                this.speedSlider = document.getElementById('speedSlider');
+                this.speedHandle = document.getElementById('speedHandle');
+                this.speedDisplay = document.getElementById('speedDisplay');
+                this.emergencyButton = document.getElementById('emergencyButton');
+                this.autoButton = document.getElementById('autoButton');
+                this.openDoorButton = document.getElementById('openDoorButton');
+                this.closeDoorButton = document.getElementById('closeDoorButton');
+                this.train = document.getElementById('train');
+                this.porteDr = document.getElementById('porteDr');
+                this.porteGc = document.getElementById('porteGc');
+                this.systemStatus = document.getElementById('systemStatus');
+                this.imageLoadStatus = document.getElementById('imageLoadStatus');
+                this.readyStatus = document.getElementById('readyStatus');
+                this.distanceDisplay = document.getElementById('distanceDisplay');
+                this.controls = document.getElementById('controls');
+                
+                this.speed = 0;
+                this.acceleration = 0;
+                this.scrollOffset = 0;
+                this.isEmergencyStop = false;
+                this.areDoorsOpen = false;
+                this.arePlatformDoorsOpen = false;
+                this.isFuActive = false;
+                this.isAutoPilotActive = false;
+                
+                this.sounds = {
+                    ventilo: new Audio('../src/sound/ventilo.mp3'),
+                    ouv_prt: new Audio('../src/sound/ouv_prt.mp3'),
+                    buzzer: new Audio('../src/sound/buzzer.mp3'),
+                    fer_prt: new Audio('../src/sound/fer_prt.mp3'),
+                };
+                this.sounds.ventilo.loop = true;
+                this.isVentiloPlaying = false;
+                
+                // Canvas préchargés pour éliminer la latence
+                this.preloadedCanvases = {};
+                this.rawImages = {}; // Images brutes pour les métadonnées
+                
+                this.tunnelSequence = [
+                    'inje4c', 
+                    '4c', 
+                    ...Array(60).fill('railext'),
+                    'ctsci',
+                    ...Array(25).fill('railext'),
+                    ...Array(2).fill('pont'),
+                    ...Array(12).fill('avt_triolo'),
+                    ...Array(2).fill('pont'),
+                    ...Array(4).fill('avt_triolo'),
+                    'triolo',
+                    ...Array(2).fill('sortie_triolo'),
+                    ...Array(20).fill('rail_tranchee'),
+                    ...Array(2).fill('pont'),
+                    ...Array(17).fill('rail_tranchee'),
+                    ...Array(15).fill('pont'),
+                    ...Array(2).fill('pont_autoroute1'),
+                    'pont_autoroute2',
+                    ...Array(2).fill('entree_tunnel'),
+                    ...Array(17).fill('tunnel_classic'),
+                    'hoteldeville',
+                    ...Array(45).fill('tunnel_classic'),
+                    'pontdebois',
+                    ...Array(5).fill('tunnel_classic')
+                ];
+                
+                this.quaiSequence = [
+                    null,
+                    'quai',
+                    ...Array(60).fill(null),
+                    'quai',
+                    ...Array(25).fill(null),
+                    ...Array(2).fill(null),
+                    ...Array(12).fill(null),
+                    ...Array(2).fill(null),
+                    ...Array(4).fill(null),
+                    'quai',
+                    ...Array(2).fill(null),
+                    ...Array(20).fill(null),
+                    ...Array(2).fill(null),
+                    ...Array(17).fill(null),
+                    ...Array(15).fill(null),
+                    ...Array(2).fill(null),
+                    null,
+                    ...Array(2).fill(null),
+                    ...Array(17).fill(null),
+                    'quai',
+                    ...Array(45).fill(null),
+                    'quai',
+                    ...Array(5).fill(null)
+                ];
+                
+                this.graduationPositions = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+                this.graduationValues = [5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -5];
+                this.imageMetadata = {};
+                this.imagesLoaded = false;
+                this.totalSequenceWidth = 0;
+                this.scaledWidths = [];
+                this.stationPositions = [];
+                this.quaiWidth = 0;
+                
+                // Initialiser le pilote automatique
+                this.autoPilot = new MetroAutoPilot(this);
+                
+                this.preloadAllImages();
+                this.initControls();
+                this.setupKeyboardControls();
+            }
+            
+            // Méthode pour obtenir la distance au prochain quai
+            getNextStationDistance() {
+                if (this.stationPositions.length === 0) return null;
+                const currentOffset = this.scrollOffset % this.totalSequenceWidth;
+                let nextStation = null;
+                let minDistance = Infinity;
+                for (let cycle = 0; cycle <= 1; cycle++) {
+                    for (let stationPos of this.stationPositions) {
+                        const absoluteStationPos = (cycle * this.totalSequenceWidth) + stationPos;
+                        const distance = absoluteStationPos - currentOffset;
+                        if (distance > 0 && distance < minDistance) {
+                            minDistance = distance;
+                            nextStation = distance;
+                        }
+                    }
+                }
+                return nextStation;
+            }
+
+            // Méthode publique pour ouvrir les portes (utilisée par l'autopilote)
+            openDoors() {
+                if (this.speed === 0 && !this.areDoorsOpen && !this.platformDoorsAnimating) {
+                    this.sounds.ouv_prt.currentTime = 0;
+                    this.sounds.ouv_prt.play();
+                    this.porteDr.style.transform = 'translateX(34px)';
+                    this.porteGc.style.transform = 'translateX(-34px)';
+                    this.areDoorsOpen = true;
+                    
+                    // Ouvrir également les portes palières avec animation
+                    this.animatePlatformDoors(true);
+                }
+            }
+
+            // Méthode publique pour fermer les portes (utilisée par l'autopilote)
+            closeDoors() {
+                if (this.areDoorsOpen && !this.platformDoorsAnimating) {
+                    this.sounds.buzzer.currentTime = 0;
+                    this.sounds.buzzer.play();
+                    this.sounds.buzzer.onended = () => {
+                        this.sounds.fer_prt.currentTime = 0;
+                        this.sounds.fer_prt.play();
+                        this.porteDr.style.transform = 'translateX(0)';
+                        this.porteGc.style.transform = 'translateX(0)';
+                        this.areDoorsOpen = false;
+                        
+                        // Fermer également les portes palières avec animation
+                        this.animatePlatformDoors(false);
+                    };
+                }
+            }
+
+            // Nouvelle méthode pour animer les portes palières via CSS
+            animatePlatformDoors(opening) {
+                if (this.platformDoorsAnimating) return;
+                
+                this.platformDoorsAnimating = true;
+                
+                if (opening) {
+                    this.ppgCanvas.style.transform = 'translateX(-40px)';
+                    this.ppdCanvas.style.transform = 'translateX(40px)';
+                    this.arePlatformDoorsOpen = true;
+                } else {
+                    this.ppgCanvas.style.transform = 'translateX(0)';
+                    this.ppdCanvas.style.transform = 'translateX(0)';
+                    this.arePlatformDoorsOpen = false;
+                }
+                
+                // Marquer la fin de l'animation après la durée CSS
+                setTimeout(() => {
+                    this.platformDoorsAnimating = false;
+                }, 1800);
+            }
+
+            // Méthode publique pour contrôler l'accélération (utilisée par l'autopilote)
+            setAcceleration(value) {
+                this.acceleration = Math.max(-5, Math.min(5, value));
+                // Mettre à jour la position du levier
+                const percentage = ((5 - this.acceleration) / 10) * 100;
+                this.setHandlePosition(percentage);
+            }
+
+            updateSystemStatus(message) {
+                if (this.systemStatus) {
+                    this.systemStatus.textContent = `> ${message}`;
+                    this.systemStatus.className = 'info-line';
+                    if (message.includes('prêt') || message.includes('attente')) {
+                        this.systemStatus.classList.add('status-ready');
+                    } else if (message.includes('erreur') || message.includes('Erreur')) {
+                        this.systemStatus.classList.add('status-error');
+                    } else if (message.includes('Chargement') || message.includes('Calcul')) {
+                        this.systemStatus.classList.add('status-info');
+                    }
+                }
+            }
+            updateImageLoadStatus(message) {
+                if (this.imageLoadStatus) {
+                    this.imageLoadStatus.textContent = `> ${message}`;
+                    this.imageLoadStatus.className = 'info-line status-warning';
+                }
+            }
+            updateReadyStatus(message) {
+                if (this.readyStatus) {
+                    this.readyStatus.textContent = `> ${message}`;
+                    this.readyStatus.className = 'info-line status-ready';
+                }
+            }
+            
+            preloadAllImages() {
+                this.updateImageLoadStatus('Préparation des ressources...');
+                
+                const stationImages = ['inje4c', '4c', 'railext', 'ctsci', 'pont', 'avt_triolo', 'triolo', 'sortie_triolo', 'rail_tranchee', 'pont_autoroute1', 'pont_autoroute2', 'entree_tunnel', 'hoteldeville', 'pontdebois'];
+                const srcImages = ['tunnel_classic'];
+                const quaiImages = ['quai', 'ppg', 'ppd'];
+                
+                const allImageNames = [...stationImages, ...srcImages, ...quaiImages];
+                let loadedCount = 0;
+                let totalImages = allImageNames.length;
+                
+                allImageNames.forEach(name => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Stocker l'image brute pour les métadonnées
+                        this.rawImages[name] = img;
+                        this.imageMetadata[name] = {
+                            width: img.width,
+                            height: img.height,
+                            aspectRatio: img.width / img.height 
+                        };
+                        if (name === 'quai') {
+                            this.quaiWidth = img.width;
+                        }
+                        
+                        // Créer un canvas préchargé avec l'image mise à l'échelle
+                        this.createPreloadedCanvas(name, img);
+                        
+                        loadedCount++;
+                        this.updateImageLoadStatus(`Images: ${loadedCount}/${totalImages}`);
+                        if (loadedCount === totalImages) {
+                            this.imagesLoaded = true;
+                            this.calculateSequenceDimensions();
+                            this.updateReadyStatus('SYSTÈME PRÊT');
+                            this.updateSystemStatus('En attente...');
+                            this.gameLoop();
+                        }
+                    };
+                    img.onerror = () => {
+                        this.updateImageLoadStatus(`Erreur: ${name}`);
+                    };
+                    
+                    if (stationImages.includes(name)) {
+                        img.src = `../src/stations/${name}.png`;
+                    } else if (srcImages.includes(name)) {
+                        img.src = `../src/${name}.png`;
+                    } else if (quaiImages.includes(name)) {
+                        img.src = `../src/${name}.png`;
+                    }
+                });
+            }
+            
+            createPreloadedCanvas(name, img) {
+                const targetHeight = 276;
+                
+                // Pour les images de tunnel
+                if (!['quai', 'ppg', 'ppd'].includes(name)) {
+                    const scaleY = targetHeight / img.height;
+                    const scaledWidth = img.width * scaleY;
+                    
+                    const canvas = document.createElement('canvas');
+                    canvas.width = scaledWidth;
+                    canvas.height = targetHeight;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Désactiver le lissage pour des images plus nettes
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(img, 0, 0, scaledWidth, targetHeight);
+                    
+                    this.preloadedCanvases[name] = canvas;
+                } else {
+                    // Pour les images de quai, on les stocke telles quelles
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(img, 0, 0);
+                    
+                    this.preloadedCanvases[name] = canvas;
+                }
+            }
+            
+            calculateSequenceDimensions() {
+                const targetHeight = 276;
+                this.totalSequenceWidth = 0;
+                this.scaledWidths = [];
+                this.stationPositions = [];
+                let currentPosition = 0;
+                for (let i = 0; i < this.tunnelSequence.length; i++) {
+                    const tunnelType = this.tunnelSequence[i];
+                    const metadata = this.imageMetadata[tunnelType];
+                    if (metadata) {
+                        const sourceHeight = metadata.height;
+                        const scaleY = targetHeight / sourceHeight;
+                        const scaledWidth = metadata.width * scaleY;
+                        this.scaledWidths[i] = scaledWidth;
+                        if (this.quaiSequence[i] === 'quai') {
+                            this.stationPositions.push(currentPosition + scaledWidth / 2);
+                        }
+                        currentPosition += scaledWidth;
+                    }
+                }
+                this.totalSequenceWidth = currentPosition;
+                this.updateSystemStatus('Calculs terminés');
+            }
+            
+            initControls() {
+                let isDragging = false;
+                let startY = 0;
+                let startTop = 0;
+                
+                this.speedHandle.addEventListener('mousedown', (e) => {
+                    if (this.isFuActive || this.isAutoPilotActive) return;
+                    isDragging = true;
+                    startY = e.clientY;
+                    const currentTop = this.getHandlePosition();
+                    startTop = currentTop;
+                    e.preventDefault();
+                });
+                
+                document.addEventListener('mousemove', (e) => {
+                    if (isDragging && !this.isFuActive && !this.isAutoPilotActive) {
+                        const deltaY = e.clientY - startY;
+                        const sliderHeight = this.speedSlider.offsetHeight;
+                        let newTop = startTop + (deltaY / sliderHeight) * 100;
+                        newTop = Math.max(0, Math.min(100, newTop));
+                        newTop = this.applyMagnetEffect(newTop);
+                        this.setHandlePosition(newTop);
+                        this.updateAcceleration(newTop);
+                    }
+                });
+                
+                document.addEventListener('mouseup', () => {
+                    if (isDragging && !this.isFuActive && !this.isAutoPilotActive) {
+                        isDragging = false;
+                        const currentPos = this.getHandlePosition();
+                        const snappedPos = this.snapToGraduation(currentPos);
+                        this.setHandlePosition(snappedPos);
+                        this.updateAcceleration(snappedPos);
+                    }
+                });
+                
+                this.speedSlider.addEventListener('click', (e) => {
+                    if (this.isFuActive || this.isAutoPilotActive) return;
+                    const rect = this.speedSlider.getBoundingClientRect();
+                    const y = e.clientY - rect.top;
+                    let percentage = (y / rect.height) * 100;
+                    percentage = Math.max(0, Math.min(100, percentage));
+                    const snappedPos = this.snapToGraduation(percentage);
+                    this.setHandlePosition(snappedPos);
+                    this.updateAcceleration(snappedPos);
+                });
+                
+                this.openDoorButton.addEventListener('click', () => {
+                    if (this.isAutoPilotActive || this.platformDoorsAnimating) return;
+                    this.openDoors();
+                });
+                
+                this.closeDoorButton.addEventListener('click', () => {
+                    if (this.isAutoPilotActive || this.platformDoorsAnimating) return;
+                    this.closeDoors();
+                });
+                
+                this.emergencyButton.addEventListener('click', () => {
+                    if (this.isAutoPilotActive) return;
+                    this.emergencyStop();
+                });
+
+                this.autoButton.addEventListener('click', () => {
+                    this.toggleAutoPilot();
+                });
+            }
+
+            toggleAutoPilot() {
+                // Inverse l'état du pilote automatique
+                this.isAutoPilotActive = !this.isAutoPilotActive;
+
+                if (this.isAutoPilotActive) {
+                    // --- Activation du PA ---
+                    this.autoButton.classList.add('active');
+                    this.updateSystemStatus('PILOTE AUTO ACTIVÉ');
+                    this.disableManualControls();
+
+                    if (this.speed > 0) {
+                        // Si le train roule, on l'arrête d'abord
+                        this.emergencyStop();
+                        const waitForStop = () => {
+                            if (this.speed === 0 && !this.isFuActive) {
+                                this.autoPilot.activate();
+                            } else {
+                                setTimeout(waitForStop, 100);
+                            }
+                        };
+                        setTimeout(waitForStop, 100);
+                    } else {
+                        // Si le train est à l'arrêt, on active directement
+                        this.autoPilot.activate();
+                    }
+                } else {
+                    // --- Désactivation du PA ---
+                    this.autoPilot.deactivate();
+                    this.autoButton.classList.remove('active');
+                    this.updateSystemStatus('PILOTE AUTO DÉSACTIVÉ');
+                    this.enableManualControls();
+                }
+            }
+
+            disableManualControls() {
+                // Désactive les contrôles un par un sans bloquer le bouton PA
+                this.speedHandle.classList.add('handle-disabled');
+                // Rend le fond du slider non cliquable
+                this.speedSlider.style.pointerEvents = 'none';
+                this.openDoorButton.disabled = true;
+                this.closeDoorButton.disabled = true;
+                this.emergencyButton.disabled = true;
+            }
+
+            enableManualControls() {
+                // Réactive les contrôles manuels
+                this.speedHandle.classList.remove('handle-disabled');
+                this.speedSlider.style.pointerEvents = 'auto';
+                this.openDoorButton.disabled = false;
+                this.closeDoorButton.disabled = false;
+                this.emergencyButton.disabled = false;
+            }
+            
+            setupKeyboardControls() {
+                document.addEventListener('keydown', (e) => {
+                    if (this.isAutoPilotActive && e.key !== 'a' && e.key !== 'A' && e.key !== 'x' && e.key !== 'X') return;
+                    
+                    if (e.key === 'o' || e.key === 'O') {
+                        if (this.speed === 0 && !this.areDoorsOpen && !this.platformDoorsAnimating) {
+                            this.openDoorButton.click();
+                        }
+                    } else if (e.key === 'f' || e.key === 'F') {
+                        if (this.areDoorsOpen && !this.platformDoorsAnimating) {
+                            this.closeDoorButton.click();
+                        }
+                    } else if (e.key === 'x' || e.key === 'X') {
+                        this.emergencyButton.click();
+                    } else if (e.key === 'a' || e.key === 'A') {
+                        this.autoButton.click();
+                    }
+                });
+            }
+            
+            getHandlePosition() {
+                const topStyle = this.speedHandle.style.top;
+                return topStyle && topStyle.includes('%') ? parseFloat(topStyle) : 50;
+            }
+            setHandlePosition(percentage) {
+                this.speedHandle.style.top = percentage + '%';
+            }
+            applyMagnetEffect(position) {
+                const MAGNET_DISTANCE = 5;
+                let closestGrad = null;
+                let minDistance = Infinity;
+                this.graduationPositions.forEach(gradPos => {
+                    const distance = Math.abs(position - gradPos);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestGrad = gradPos;
+                    }
+                });
+                if (minDistance < MAGNET_DISTANCE && closestGrad !== null) {
+                    const attractionStrength = (MAGNET_DISTANCE - minDistance) / MAGNET_DISTANCE;
+                    const attraction = (closestGrad - position) * attractionStrength * 0.5;
+                    position += attraction;
+                }
+                return position;
+            }
+            snapToGraduation(position) {
+                let closestGrad = this.graduationPositions[0];
+                let minDistance = Math.abs(position - closestGrad);
+                this.graduationPositions.forEach(gradPos => {
+                    const distance = Math.abs(position - gradPos);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestGrad = gradPos;
+                    }
+                });
+                return closestGrad;
+            }
+            updateAcceleration(topPercentage) {
+                const index = this.graduationPositions.findIndex(pos => Math.abs(pos - topPercentage) < 1);
+                if (index !== -1) {
+                    this.acceleration = this.graduationValues[index];
+                } else {
+                    this.acceleration = 5 - (topPercentage / 100) * 10;
+                }
+                if (this.isEmergencyStop) {
+                    this.isEmergencyStop = false;
+                    this.emergencyButton.style.background = '#ff0000';
+                }
+            }
+            emergencyStop() {
+                this.isEmergencyStop = true;
+                this.isFuActive = true;
+                this.acceleration = -7;
+                this.emergencyButton.style.background = '#880000';
+                this.setHandlePosition(100);
+                
+                this.soundManager.handleEmergencyBraking(this.speed);
+                
+                this.speedHandle.classList.add('handle-disabled');
+                const checkStop = () => {
+                    if (this.speed === 0) {
+                        this.isFuActive = false;
+                        this.speedHandle.classList.remove('handle-disabled');
+                    } else {
+                        requestAnimationFrame(checkStop);
+                    }
+                };
+                checkStop();
+            }
+            updateSpeed() {
+                if (this.isEmergencyStop) {
+                    this.speed = Math.max(0, this.speed - 0.2);
+                    if (this.speed === 0) {
+                        this.acceleration = 0;
+                        this.isEmergencyStop = false;
+                    }
+                } else if (!this.areDoorsOpen && !this.isFuActive) {
+                    let speedChange = this.acceleration * 0.0135;
+                    if (this.acceleration < 0) speedChange *= 0.9;
+                    this.speed = Math.max(0, Math.min(80, this.speed + speedChange));
+                }
+                if (this.speed === 0 && !this.isVentiloPlaying) {
+                    this.sounds.ventilo.currentTime = 0;
+                    this.sounds.ventilo.play();
+                    this.isVentiloPlaying = true;
+                } else if (this.speed > 0 && this.isVentiloPlaying) {
+                    this.sounds.ventilo.pause();
+                    this.sounds.ventilo.currentTime = 0;
+                    this.isVentiloPlaying = false;
+                }
+                if (this.speed === 0 && this.acceleration !== 0 && !this.isFuActive) {
+                    this.acceleration = 0;
+                }
+                this.soundManager.updateSpeed(this.speed, this.acceleration);
+                this.speedDisplay.textContent = Math.round(this.speed) + ' km/h';
+            }
+            drawTunnels() {
+                if (!this.imagesLoaded) return;
+                const targetHeight = 276;
+                const canvasWidth = 843;
+                const scrollSpeed = (this.speed / 80) * 15 * 1.1; // Vitesse augmentée
+                this.scrollOffset += scrollSpeed;
+                
+                const offsetInCycle = this.scrollOffset % this.totalSequenceWidth;
+                
+                // Nettoyer le canvas principal
+                this.ctx.clearRect(0, 0, canvasWidth, targetHeight);
+                
+                // Dessiner les tunnels avec anti-gap (chevauchement léger)
+                for (let cycle = -1; cycle <= 2; cycle++) {
+                    let currentX = (cycle * this.totalSequenceWidth) - offsetInCycle;
+                    for (let i = 0; i < this.tunnelSequence.length; i++) {
+                        const tunnelType = this.tunnelSequence[i];
+                        const preloadedCanvas = this.preloadedCanvases[tunnelType];
+                        const scaledWidth = this.scaledWidths[i];
+                        
+                        if (preloadedCanvas && scaledWidth && currentX + scaledWidth > -1 && currentX < canvasWidth + 1) {
+                            // Légère extension pour éviter les gaps
+                            this.ctx.drawImage(preloadedCanvas, 0, 0, preloadedCanvas.width, preloadedCanvas.height,
+                                             Math.floor(currentX - 0.5), 0, Math.ceil(scaledWidth + 1), targetHeight);
+                        }
+                        currentX += scaledWidth;
+                    }
+                }
+                
+                // Nettoyer les canvas des quais
+                this.quaiCtx.clearRect(0, 0, canvasWidth, targetHeight);
+                
+                // Dessiner les quais (les portes palières sont maintenant gérées par CSS)
+                for (let cycle = -1; cycle <= 2; cycle++) {
+                    let currentX = (cycle * this.totalSequenceWidth) - offsetInCycle;
+                    for (let i = 0; i < this.quaiSequence.length; i++) {
+                        const quaiType = this.quaiSequence[i];
+                        const scaledWidth = this.scaledWidths[i];
+                        if (quaiType === 'quai') {
+                            const quaiCanvas = this.preloadedCanvases.quai;
+                            const quaiMetadata = this.imageMetadata.quai;
+                            
+                            if (quaiCanvas && quaiMetadata && currentX + scaledWidth > -1 && currentX < canvasWidth + 1) {
+                                const quaiWidthMultiplier = 1;
+                                const quaiHeightMultiplier = 0.66;
+                                const quaiWidth = scaledWidth * quaiWidthMultiplier;
+                                const quaiHeight = targetHeight * quaiHeightMultiplier;
+                                const quaiX = Math.floor(currentX - 0.5);
+                                const quaiY = targetHeight - quaiHeight;
+                                
+                                // Dessiner le quai principal
+                                this.quaiCtx.drawImage(quaiCanvas, 0, 0, quaiCanvas.width, quaiCanvas.height, 
+                                                     quaiX, quaiY, Math.ceil(quaiWidth + 1), quaiHeight);
+                            }
+                        }
+                        currentX += scaledWidth;
+                    }
+                }
+                
+                // Dessiner les portes palières sur leurs canvas dédiés (une seule fois par quai)
+                this.drawPlatformDoors(offsetInCycle, canvasWidth, targetHeight);
+            }
+            
+            drawPlatformDoors(offsetInCycle, canvasWidth, targetHeight) {
+                // Nettoyer les canvas des portes
+                this.ppdCtx.clearRect(0, 0, canvasWidth, targetHeight);
+                this.ppgCtx.clearRect(0, 0, canvasWidth, targetHeight);
+                
+                for (let cycle = -1; cycle <= 2; cycle++) {
+                    let currentX = (cycle * this.totalSequenceWidth) - offsetInCycle;
+                    for (let i = 0; i < this.quaiSequence.length; i++) {
+                        const quaiType = this.quaiSequence[i];
+                        const scaledWidth = this.scaledWidths[i];
+                        if (quaiType === 'quai') {
+                            const ppgCanvas = this.preloadedCanvases.ppg;
+                            const ppdCanvas = this.preloadedCanvases.ppd;
+                            
+                            if (ppgCanvas && ppdCanvas && currentX + scaledWidth > -1 && currentX < canvasWidth + 1) {
+                                const quaiWidthMultiplier = 1;
+                                const quaiHeightMultiplier = 0.66;
+                                const quaiWidth = scaledWidth * quaiWidthMultiplier;
+                                const quaiHeight = targetHeight * quaiHeightMultiplier;
+                                const quaiX = Math.floor(currentX - 0.5);
+                                const quaiY = targetHeight - quaiHeight;
+                                
+                                // Dessiner ppd (portes droites)
+                                this.ppdCtx.drawImage(ppdCanvas, 0, 0, ppdCanvas.width, ppdCanvas.height, 
+                                                    quaiX, quaiY, Math.ceil(quaiWidth + 1), quaiHeight);
+                                
+                                // Dessiner ppg (portes gauches)
+                                this.ppgCtx.drawImage(ppgCanvas, 0, 0, ppgCanvas.width, ppgCanvas.height, 
+                                                    quaiX, quaiY, Math.ceil(quaiWidth + 1), quaiHeight);
+                            }
+                        }
+                        currentX += scaledWidth;
+                    }
+                }
+            }
+            gameLoop() {
+                if (!this.imagesLoaded) return;
+                this.ctx.clearRect(0, 0, 843, 276);
+                this.updateSpeed();
+                this.drawTunnels();
+                
+                // Mettre à jour l'autopilote
+                if (this.isAutoPilotActive) {
+                    this.autoPilot.update();
+                }
+                
+                const nextStationDistance = this.getNextStationDistance();
+                if (nextStationDistance !== null) {
+                    const scaleFactor = 26 / 1160;
+                    const distanceInMeters = Math.round(nextStationDistance * scaleFactor);
+                    this.distanceDisplay.textContent = `${distanceInMeters} m`;
+                } else {
+                    this.distanceDisplay.textContent = '--- m';
+                }
+                requestAnimationFrame(() => this.gameLoop());
+            }
+        }
+        window.addEventListener('load', () => {
+            new MetroSimulator();
+        });
+    </script>
+</body>
+</html>
