@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirection vers le jeu</title>
+    <meta http-equiv="refresh" content="0; url=jeu/jeu.html">
+    <script>
+        // Utilisation du même type de chemin relatif que dans le jeu
+        window.location.replace("jeu/jeu.html");
+    </script>
+</head>
+<body>
+    <p>Redirection vers le jeu en cours... Si rien ne se passe, <a href="jeu/jeu.html">cliquez ici</a>.</p>
+    
+    <!-- Pour déboguer les chemins, vous pouvez décommenter cette section -->
+    <!--
+    <script>
+        console.log("Chemin actuel de la page :", window.location.href);
+        console.log("Chemin de redirection :", window.location.origin + window.location.pathname.replace('index.html', '') + "jeu/jeu.html");
+    </script>
+    -->
+</body>
+</html>
