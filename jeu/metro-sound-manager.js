@@ -28,12 +28,12 @@ class MetroSoundManager {
             gloup: 'glouglou.mp3',          // 1 seconde (arrêt)
             inertie: 'inertie.mp3',         // Son d'inertie en boucle
             // Nouveaux sons de vitesse
-            speed15: '15.m4a',              // 7-26 km/h
+            speed15: '15.mp3',              // 7-26 km/h
             speed30: '30.mp3',              // 26.01-32 km/h
-            speed35: '35.m4a',              // 32.01-35 km/h
-            speed40: '40.m4a',              // 35.01-41 km/h
-            speed50: '50.m4a',              // 41.01-51 km/h et 51.01-61 km/h
-            speed60: '60.m4a'               // 61.01-71 km/h
+            speed35: '35.mp3',              // 32.01-35 km/h
+            speed40: '40.mp3',              // 35.01-41 km/h
+            speed50: '50.mp3',              // 41.01-51 km/h et 51.01-61 km/h
+            speed60: '60.mp3'               // 61.01-71 km/h
         };
 
         Object.keys(soundFiles).forEach(key => {
